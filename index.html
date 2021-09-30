@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Blender to THREE.js</title>
+    <meta charset='utf-8'/>
+    <link rel="icon" href="icon.ico" type="image/x-icon">
+    <script src="./js/build/three.min.js"></script>
+    <script src="./js/examples/jsm/loaders/GLTFLoader.js"></script>
+    <script src="./js/examples/jsm/controls/OrbitControls.js"></script>
+  </head>
+  <style>
+@font-face {
+  font-family: "Nunito";
+  src: url('./Fonts/Nunito/Nunito-ExtraLight.ttf') format('truetype');
+}
+@font-face {
+  font-family: "Nunito";
+  src: url('./Fonts/Nunito/Nunito-SemiBold.ttf') format('truetype');
+  font-weight: bold;
+}
+* {
+  user-select: none;
+}
+body {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-evenly;
+  align-items: center;
+  scroll-behavior: smooth;
+  background-color: #f0f0f3;
+//  overflow: hidden;
+  font-family: Nunito;
+}
+.splash {
+  background-color: white;
+  position: absolute;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 1;
+  z-index: 5;
+  transition: opacity 0.5s;
+}
+.splash > img {
+  width: auto;
+  height: 200px;
+}
+.titleWork {
+  position: absolute;
+  margin: 0 auto;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: center;
+  align-items: center;
+  z-index: 3;
+}
+.titleWork > h4 {
+  margin: 0;
+}
+.convertWork {
+  position: relative;
+  width: 50%;
+  height: 100%;
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-start;
+  align-items: center;
+}
+.sampleWork {
+  position: relative;
+  width: 50%;
+  height: 100%;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: stretch;
+  align-items: space-around;
+}
+.sampleInstructions {
+  position: relative;
+  width: 72%;
+  height: 100%;
+  overflow-y: scroll;
+  align-self: flex-end;
+}
+h1 {
+  color: #038ece;
+}
+#fileIn {
+  display: none !important;
+  position: absolute;
+}
+#readFile, #DLFile, #clearFiles {
+  position: absolute;
+  right: 0;
+  font-size: 1.1em;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+  z-index: 4;
+}
+#readFile, #DLFile {
+  top: 0;
+}
+#DLFile, #clearFiles {
+  visibility: hidden;
+  opacity: 0;
+}
+#readFile {
+  opacity: 1;
+  box-shadow: 2px 2px 2px #aeaeae;
+}
+#readFile:active {
+  box-shadow: 0 0 0 black;
+}
+#clearFiles {
+  bottom: 0;
+  background-color: #f06c6c;
+}
+.vividHover:hover {
+  opacity: 1 !important;
+}
+label, button {
+  position: relative;
+  width: 150px;
+  height: 50px;
+  background-color: #00aeff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-family: inherit;
+  font-weight: bold;
+}
+label:hover, button:hover {
+  cursor: pointer;
+}
+#fileName {
+  font-family: inherit;
+  font-weight: bold;
+  border-radius: 2px;
+}
+.previewContainer {
+  position: relative;
+  width: 80%;
+  height: 100%;
+  margin: 0 10px;
+  padding: 0 5px;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: space-around;
+  align-items: flex-start;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+}
+.previewContainer > pre {
+  position: relative;
+  width: 90%;
+  height: 40%;
+  margin: 0;
+  padding: 5px;
+  overflow-y: scroll;
+  box-shadow: 0 -5px 5px #aeaeae;
+  font-family: inherit;
+}
+#GLPreview > p {
+  width: calc(100% - 140px);
+}
+.headingCont {
+  position: relative;
+  width: 90%;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-between;
+  align-items: center;
+}
+.headingCont > h4, .headingCont > p {
+  margin: 0;
+}
+.bolded, .boldHover:hover {
+  font-weight: bold;
+  cursor: pointer;
+}
+.SIHeadingCont {
+  position: relative;
+  width: 100%;
+  height: 10%;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-around;
+  align-items: center;
+  background-color: #f0f0f3;
+}
+.SIHeadingCont > h4 {
+  margin: 0;
+  border-radius: 10px;
+  padding: 15px;
+}
+.selected {
+  background-color:white;
+}
+.content {
+  position: absolute;
+  height: calc(90% - 4px);
+  width: calc(100% - 4px);
+  border-radius: 10px;
+  overflow-y: scroll;
+  border: 2px solid rgb(247,214,101);
+}
+#c {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.list-item {
+  display: inline-block;
+  box-shadow: 1px 2px 2px #aeaeae;
+  width: 80%;
+  height: 80%;
+  margin: 5% 10%;
+}
+.stepNum {
+  position: relative;
+  font-size: 20px;
+  font-family: Nunito;
+  font-weight: bold;
+  padding: 0;
+  margin: 0;
+  left: 0;
+  top: 0;
+  color: #038ece;
+}
+#legoPieces, #stats {
+  visibility: hidden;
+  background-color: #f0f0f3;
+  overflow-x: scroll;
+}
+#stats > table > tr:nth-child(1), #stats > table > tr:last-child {
+   font-weight: bold;
+}
+td {
+  white-space: nowrap;
+  text-align: center;
+  padding: 3px;
+}
+#stats > table > tr > td:nth-child(1) {
+  text-align: left;
+}
+#notification {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 200px;
+  padding: 20px;
+  border-radius: 5px;
+  background-color: white;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+}
+.hidden {
+  display: none;
+}
+  </style>
+  <body onload="splash();reposition()" onresize="reposition()">
+<canvas id="c"></canvas>
+  <div class="splash"><img src="./Blender-Logo.png"/><img src="./THREEjs-Logo.png"/></div>
+
+<div id="notification" class="hidden">
+  <p id="message"></p>
+  <button id="close-button" onClick="closeNotification()">
+    Close
+  </button>
+  <button id="restart-button" onClick="restartApp()" class="hidden">
+    Restart
+  </button>
+</div>
+    <script src="./js/renderer.js"></script>
+
+  <div class="titleWork">
+    <h1>Blender to THREE.js</h1>
+    <h4>GLTF &#8614; Transform Key</h4>
+    <p id='fileSizeRatio' style="display:inline-block">Minified By 1&times;</p>
+    <input id="fileName" oninput="logName(this)" placeholder="Save as..."/>
+  </div>
+
+  <div class="convertWork">
+      <div id="previewCont" class='previewContainer'>
+	<div class="headingCont">
+	  <h4>Original File(s)</h4>
+	</div>
+	<input type='file' id='fileIn' oninput='readFile()' multiple/>
+	<label id='readFile' class="vividHover" for='fileIn'>Upload GLTF</label>
+	<button id="clearFiles" class="vividHover" onclick="clearFiles()">Clear</button>
+        <pre id='GLPreview'></pre>
+	<div class="headingCont">
+	  <h4>TK Output</h4>
+	</div>
+	<button id="DLFile" class="vividHover" onclick="download()">Download</button>
+        <pre id='TKPreview'></pre>
+      </div>
+  </div>
+
+  <div class="sampleWork">
+    <div class="sampleInstructions">
+      <div class="SIHeadingCont">
+	<h4 class="boldHover selected" onclick="displayMe('SIs', this)">Sample Instructions</h4>
+	<h4 class="boldHover" onclick="displayMe('legoPieces', this)">Lego Pieces</h4>
+	<h4 class="boldHover" onclick="displayMe('stats', this)">Statistics</h4>
+      </div>
+      <div id="SIs" class="content"></div>
+      <div id="legoPieces" class="content"></div>
+      <div id="stats" class="content"></div>
+    </div>
+  </div>
+
+
+    <script src="./js/index.js">
+
+   </script>
+    <script>
+
+
+let renderer;
+const canvas = document.getElementById('c');
+const content = document.getElementsByClassName('content')[0];
+const loader = new THREE.GLTFLoader();
+const scenes = [];
+
+function init(steps) {
+//LOAD EACH STEP
+    steps.forEach((step, i) => {
+
+	const scene = new THREE.Scene();
+	scene.background = new THREE.Color(0xF7ECD8);
+//SCENE CONTAINER
+	const element = document.createElement( 'div' );
+	element.className = 'list-item';
+//STEP NUMBER
+	const stepBox = document.createElement('p');
+	stepBox.innerHTML = 'Step ' + (i+1);
+	stepBox.className = 'stepNum';
+	element.appendChild(stepBox);
+//APPEND SCENE CONTAINER TO MAIN CONTAINER
+scene.userData.element = element;
+	content.appendChild( element );
+
+/* PUT THIS IN `ELEMENT`
+
+	    <div class="loadingScreen">
+	      <div class="logosCont">
+	        <img src="./img/icon.ico" class="greyedLogo"/>
+	        <div class="vividLogoCont" id="loadCont">
+		  <img src="./img/icon.ico" class="vividLogo"/>
+	        </div>
+	      </div>
+	      <div class='loadPerc'>0%</div>
+	    </div>
+
+*/
+
+//CAMERA
+	const camera = new THREE.PerspectiveCamera( 50, element.offsetWidth/element.offsetHeight,0.001,5000 );
+	camera.position.set(0.2, 0.32, 0.36);
+	camera.lookAt(0, 0, 0);
+
+scene.userData.camera = camera;
+
+//ORBIT CONTROLS
+	const controls = new THREE.OrbitControls( scene.userData.camera, scene.userData.element );
+	controls.minDistance = 0.05;
+	controls.maxDistance = 1.2;
+	controls.enablePan = true;
+	controls.enableZoom = true;
+	controls.zoomSpeed = 0.4;
+
+scene.userData.controls = controls;
+
+//LOAD THE GLTF
+	step.forEach(piece => {
+	    loader.load(piece, function(glb) {
+	      glb.scene.children[0].castShadow = true;
+	      glb.scene.children[0].receiveShadow = false;
+	      scene.add(glb);
+	    });
+	});
+
+//LIGHTS
+	//scene.add( new THREE.HemisphereLight( 0xaaaaaa, 0x444444 ) );
+
+	const light = new THREE.DirectionalLight( 0xffffff, 0.5 );
+	light.position.set( 1, 1, 1 );
+//	light.castShadow = true;
+	//scene.add( light );
+
+	scene.add( new THREE.AmbientLight( 0xffffff, 0.3 ) );
+
+	const spotLight = new THREE.SpotLight( 0xffffff, 0.2 );
+	spotLight.angle = Math.PI / 5;
+	spotLight.penumbra = 0.2;
+	spotLight.position.set( 2, 3, 3 );
+//	spotLight.castShadow = true;
+//	spotLight.shadow.camera.near = 0.05;
+//	spotLight.shadow.camera.far = 4;
+//	spotLight.shadow.mapSize.width = 1024;
+//	spotLight.shadow.mapSize.height = 1024;
+	scene.add( spotLight );
+
+	const spotLight1 = new THREE.SpotLight( 0xffffff, 0.2 );
+	spotLight1.angle = Math.PI / 5;
+	spotLight1.penumbra = 0.2;
+	spotLight1.position.set( -2, 3, -3 );
+//	spotLight1.castShadow = true;
+//	spotLight1.shadow.camera.near = 0.05;
+//	spotLight1.shadow.camera.far = 4;
+//	spotLight1.shadow.mapSize.width = 1024;
+//	spotLight1.shadow.mapSize.height = 1024;
+	scene.add( spotLight1 );
+
+	const spotLight2 = new THREE.SpotLight( 0xffffff, 0.5 );
+	spotLight2.angle = Math.PI / 5;
+	spotLight2.penumbra = 0.2;
+	spotLight2.position.set( 5, 0.02, -0.02 );
+//	spotLight2.castShadow = true;
+//	spotLight2.shadow.camera.near = 0.05;
+//	spotLight2.shadow.camera.far = 4;
+//	spotLight2.shadow.mapSize.width = 1024;
+//	spotLight2.shadow.mapSize.height = 1024;
+	scene.add( spotLight2 );
+
+	const dirLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+	dirLight.position.set( 0, 2, 0 );
+//	dirLight.castShadow = true;
+//	dirLight.shadow.camera.near = 0.05;
+//	dirLight.shadow.camera.far = 4;
+
+//	dirLight.shadow.camera.right = 1;
+//	dirLight.shadow.camera.left = - 1;
+//	dirLight.shadow.camera.top = 1;
+//	dirLight.shadow.camera.bottom = - 1;
+
+//	dirLight.shadow.mapSize.width = 1024;
+//	dirLight.shadow.mapSize.height = 1024;
+	scene.add( dirLight );
+
+//GROUND
+/*
+	const planeGeometry = new THREE.PlaneGeometry( 3, 3, 1, 1 );
+	const circleGeometry = new THREE.CircleGeometry(0.1,200,0,2*Math.PI);
+	const material =  new THREE.MeshLambertMaterial({color: 0xb0ffa0, transparent: true, opacity: 0.5});
+	new THREE.MeshDepthMaterial({color: 0xb0ffa0});
+	new THREE.MeshPhongMaterial({color: 0xb0ffa0, shininess: 0 , reflectivity: 0.5, opacity: 0.75} );
+#f8c5a6  //pink
+#f8cea6 //coral
+#f7d7a6 //soft-yellow
+#f8d1a6 // beige
+*/
+/*
+	const a = 0.5;
+	const boxes = [];
+	const facesPlaces = [[0,a,0],[0,0,0],[0,-a,0],[0,0,0],[0,a,0],[0,0,Math.PI/2],[2*a,a,0],[0,0,Math.PI/2],[0,a,0],[Math.PI/2,0,0],[0,a,-2*a],[Math.PI/2,0,0]]
+
+    for (let i = 0; i<6; i++) {
+	const boxPoints = [];
+	boxPoints.push( new THREE.Vector3( a, a, a ) );
+	boxPoints.push( new THREE.Vector3( a, a, -a ) );
+	boxPoints.push( new THREE.Vector3( -a, a, -a) );
+	boxPoints.push( new THREE.Vector3( -a, a, a ) );
+	boxPoints.push( new THREE.Vector3( a, a, a ) );
+
+	const boxShape = new THREE.BufferGeometry().setFromPoints( boxPoints );
+	const boxMat = new THREE.LineBasicMaterial( {
+		color: 0xffffff,
+		linewidth: 5 //in pixels
+	} );
+
+	const Box = new THREE.Line( boxShape, boxMat );
+	Box.position.fromArray(facesPlaces[2*i]);
+	Box.rotation.fromArray(facesPlaces[2*i+1]);
+	boxes.push(Box);
+    }
+	boxes.forEach(Box => {
+	  scene.add(Box);
+	});
+
+//	const circleGeometry = new THREE.CircleGeometry(0.1,200,0,2*Math.PI);
+//	const material =  new THREE.MeshLambertMaterial({color: 0xb0ffa0, transparent: true, opacity: 0.2});
+//	const ground = new THREE.Mesh( circleGeometry, material);
+//	ground.position.y = 0.01;
+
+	const boxFace = new THREE.PlaneGeometry(2*a, 2*a);
+	const materialCoral =  new THREE.MeshBasicMaterial({color: 0xf8cea6, transparent: false, opacity: 1});
+	const materialPink =  new THREE.MeshBasicMaterial({color: 0xf8c5a6, transparent: true, opacity: 0.5});
+	const materialSoftYellow =  new THREE.MeshBasicMaterial({color: 0xf7d7a6,transparent: true, opacity: 1});
+	const material1 =  new THREE.MeshBasicMaterial({color: 0xF7ECD8, transparent: true, opacity: 0.5});
+	const materialBeige =  new THREE.MeshBasicMaterial({color: 0xf8d1a6, transparent: true, opacity: 1});
+	const groundShadowMaterial =  new THREE.ShadowMaterial({transparent: true});
+
+
+
+	const face1 = new THREE.Mesh( boxFace, material1);
+	face1.rotation.x = - Math.PI / 2;
+	face1.rotation.z = - Math.PI / 2;
+//	face1.receiveShadow = true;
+	scene.add( face1 );
+	const groundShadow = new THREE.Mesh( boxFace, groundShadowMaterial);
+	groundShadow.rotation.x = - Math.PI / 2;
+	groundShadow.rotation.z = - Math.PI / 2;
+	groundShadow.position.y = 0.01;
+//	groundShadow.receiveShadow = true;
+//	scene.add( groundShadow );
+
+	const face2 = new THREE.Mesh( boxFace, materialPink);
+	face2.rotation.x =  Math.PI / 2;
+	face2.rotation.z = - Math.PI / 2;
+	face2.position.y = 2*a;
+	scene.add( face2 );
+
+	const face3 = new THREE.Mesh( boxFace, materialCoral);
+	face3.rotation.y = - Math.PI / 2;
+	face3.position.set(1*a, 1*a, 0);
+	scene.add( face3 );
+
+	const face4 = new THREE.Mesh( boxFace, materialCoral);
+	face4.rotation.y = Math.PI / 2;
+	face4.position.set(-1*a, 1*a, 0);
+	scene.add( face4 );
+
+	const face5 = new THREE.Mesh( boxFace, materialBeige);
+	face5.rotation.y = Math.PI;
+	face5.position.set(0, 1*a, 1*a);
+	scene.add( face5 );
+
+	const face6 = new THREE.Mesh( boxFace, materialBeige);
+	face6.position.set(0, 1*a, -1*a);
+	scene.add( face6 );
+*/
+
+	scenes.push( scene );
+
+    });
+
+//RENDERER FOR ALL SCENES
+    renderer = new THREE.WebGLRenderer( { canvas: canvas, antialias: true, alpha: true } );
+    renderer.setClearColor( 0xf0f0f3, 0 );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.shadowMap.enabled = false;
+//ACTION
+    animate();
+}
+
+function updateSize() {
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    if ( canvas.width !== width || canvas.height !== height ) {
+	renderer.setSize( width, height, false );
+    }
+}
+
+function animate() {
+    render();
+    requestAnimationFrame( animate );
+}
+
+function render() {
+    updateSize();
+
+    canvas.style.transform = `translateY(${window.scrollY}px)`;
+
+    renderer.setClearColor( 0xf0f0f3, 0 );
+    renderer.setScissorTest( false );
+    renderer.clear();
+
+    renderer.setClearColor( 0xe0e0e0 );
+    renderer.setScissorTest( true );
+
+    scenes.forEach( function ( scene ) {
+	// so something moves
+	//scene.children[ 0 ].rotation.y = Date.now() * 0.001;
+
+	// get the element that is a place holder for where we want to draw the scene
+	const element = scene.userData.element;
+
+	// get its position relative to the page's viewport
+	const rect = element.getBoundingClientRect();
+
+	// check if it's offscreen. If so skip it
+	if ( rect.bottom < 0 || rect.top > renderer.domElement.clientHeight ||
+		 rect.right < 0 || rect.left > renderer.domElement.clientWidth ) {
+			return; // it's off screen
+	}
+
+	// set the viewport
+	const width = rect.right - rect.left;
+	const height = rect.bottom - rect.top;
+	const left = rect.left;
+	const bottom = renderer.domElement.clientHeight - rect.bottom;
+
+	renderer.setViewport( left, bottom, width, height );
+	renderer.setScissor( left, bottom, width, height );
+
+	const camera = scene.userData.camera;
+
+	camera.aspect = width / height; // not changing in this example
+	camera.updateProjectionMatrix();
+
+	scene.userData.controls.update();
+
+	renderer.render( scene, camera );
+    });
+}
+
+function diseng() {
+  scenes.forEach(scene => {
+    clearThree(scene);
+    scene = null;
+  });
+  scenes.length = 0;
+  cancelAnimationFrame(animate);
+}
+
+function clearThree(obj){
+  if (obj.children) {
+    while(obj.children.length > 0){ 
+      clearThree(obj.children[0]);
+      obj.remove(obj.children[0]);
+    }
+  }
+  if(obj.geometry) obj.geometry.dispose();
+
+  if(obj.material){ 
+    //in case of map, bumpMap, normalMap, envMap ...
+    Object.keys(obj.material).forEach(prop => {
+      if(!obj.material[prop])
+        return;
+      if(obj.material[prop] !== null && typeof obj.material[prop].dispose === 'function')                                  
+        obj.material[prop].dispose();                                                      
+    })
+    obj.material.dispose();
+  }
+}
+
+//module.exports = {init, diseng};
+window.init = init;
+window.diseng = diseng;
+   </script>
+  </body>
+</html>
