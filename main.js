@@ -1,5 +1,5 @@
 const { app, BrowserWindow, ipcMain } = require('electron')
-const { autoUpdater } = require('electron-updater')
+//const { autoUpdater } = require('electron-updater')
 
 function createWindow () {
   const win = new BrowserWindow({
@@ -26,9 +26,10 @@ app.whenReady().then(() => {
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
-  autoUpdater.checkForUpdatesAndNotify()
+  //autoUpdater.checkForUpdatesAndNotify()
 })
 
+/*
 autoUpdater.on('update-available', () => {
   ipcMain.send('update_available')
   console.log(ipcMain.sendSync('getUp', 'There is an update here'))
@@ -41,3 +42,4 @@ autoUpdater.on('update-downloaded', () => {
 ipcMain.on('restart_app', () => {
   autoUpdater.quitAndInstall();
 })
+*/
