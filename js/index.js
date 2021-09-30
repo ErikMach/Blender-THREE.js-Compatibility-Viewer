@@ -149,7 +149,7 @@ function splash() {
    setTimeout(() => {
      document.getElementsByClassName('splash')[0].style.zIndex = '-1';
    }, 500);
-  }, 600);
+  }, 1200);
 }
 
 function readFile() {
