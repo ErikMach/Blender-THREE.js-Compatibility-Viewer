@@ -27,7 +27,7 @@ body {
   height: 100vh;
   margin: 0;
   display: flex;
-  flex-flow: column nowrap;
+  flex-flow: row nowrap;
   justify-content: space-evenly;
   align-items: center;
   scroll-behavior: smooth;
@@ -52,28 +52,7 @@ body {
   width: auto;
   height: 200px;
 }
-.titleWork {
-  position: absolute;
-  margin: 0 auto;
-  display: flex;
-  flex-flow: column nowrap;
-  justify-content: center;
-  align-items: center;
-  z-index: 3;
-}
-.titleWork > h4 {
-  margin: 0;
-}
-.convertWork {
-  position: relative;
-  width: 50%;
-  height: 100%;
-  display: flex;
-  flex-flow: row wrap;
-  justify-content: flex-start;
-  align-items: center;
-}
-.sampleWork {
+.dispWork {
   position: relative;
   width: 50%;
   height: 100%;
@@ -92,22 +71,25 @@ body {
 h1 {
   color: #038ece;
 }
+.LHS {
+  position: relative;
+}
 #fileIn {
   display: none !important;
   position: absolute;
 }
-#readFile, #DLFile, #clearFiles {
-  position: absolute;
+#readFile, #clearFiles {
+  position: relative;
   right: 0;
   font-size: 1.1em;
   opacity: 0.5;
   transition: opacity 0.2s;
   z-index: 4;
 }
-#readFile, #DLFile {
+#readFile{
   top: 0;
 }
-#DLFile, #clearFiles {
+#clearFiles {
   visibility: hidden;
   opacity: 0;
 }
@@ -122,9 +104,6 @@ h1 {
   bottom: 0;
   background-color: #f06c6c;
 }
-.vividHover:hover {
-  opacity: 1 !important;
-}
 label, button {
   position: relative;
   width: 150px;
@@ -138,53 +117,6 @@ label, button {
   font-weight: bold;
 }
 label:hover, button:hover {
-  cursor: pointer;
-}
-#fileName {
-  font-family: inherit;
-  font-weight: bold;
-  border-radius: 2px;
-}
-.previewContainer {
-  position: relative;
-  width: 80%;
-  height: 100%;
-  margin: 0 10px;
-  padding: 0 5px;
-  display: flex;
-  flex-flow: column nowrap;
-  justify-content: space-around;
-  align-items: flex-start;
-  overflow-x: hidden;
-  overflow-y: hidden;
-  scroll-behavior: smooth;
-}
-.previewContainer > pre {
-  position: relative;
-  width: 90%;
-  height: 40%;
-  margin: 0;
-  padding: 5px;
-  overflow-y: scroll;
-  box-shadow: 0 -5px 5px #aeaeae;
-  font-family: inherit;
-}
-#GLPreview > p {
-  width: calc(100% - 140px);
-}
-.headingCont {
-  position: relative;
-  width: 90%;
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: space-between;
-  align-items: center;
-}
-.headingCont > h4, .headingCont > p {
-  margin: 0;
-}
-.bolded, .boldHover:hover {
-  font-weight: bold;
   cursor: pointer;
 }
 .SIHeadingCont {
@@ -243,22 +175,12 @@ label:hover, button:hover {
   background-color: #f0f0f3;
   overflow-x: scroll;
 }
-#stats > table > tr:nth-child(1), #stats > table > tr:last-child {
-   font-weight: bold;
-}
-td {
-  white-space: nowrap;
-  text-align: center;
-  padding: 3px;
-}
-#stats > table > tr > td:nth-child(1) {
-  text-align: left;
-}
 #notification {
-  position: fixed;
-  bottom: 20px;
-  left: 20px;
+  position: absolute;
+  top: calc(100% - 100px);
+  left: calc(100% - 100px);
   width: 200px;
+  height: 200px;
   padding: 20px;
   border-radius: 5px;
   background-color: white;
@@ -268,36 +190,37 @@ td {
   display: none;
 }
   </style>
-  <body onload="splash();reposition()" onresize="reposition()">
-<canvas id="c"></canvas>
+
+  <body onload="splash();">
+
+  <canvas id="c"></canvas>
+
   <div class="splash"><img src="./Blender-Logo.png"/><img src="./THREEjs-Logo.png"/></div>
 
-<div id="notification" class="hidden">
-  <p id="message"></p>
-  <button id="close-button" onClick="closeNotification()">
-    Close
-  </button>
-  <button id="restart-button" onClick="restartApp()" class="hidden">
-    Restart
-  </button>
-</div>
+  <div id="notification" class="hidden">
+    <p id="message"></p>
+    <button id="close-button" onClick="closeNotification()">
+      Close
+    </button>
+    <button id="restart-button" onClick="restartApp()" class="hidden">
+      Restart
+    </button>
+  </div>
+
+  <div class="LHS">
+    <input type='file' id='fileIn' oninput='readFile()'/>
+    <label id='readFile' class="vividHover" for='fileIn'>Upload GLTF</label>
+    <button id="clearFiles" class="vividHover" onclick="clearFiles()">Clear</button>
+    
+  </div>
 
   <div class="dispWork">
-      <div id="previewCont" class='previewContainer'>
-	<div class="headingCont">
-	  <h4>Original File</h4>
-	</div>
-        <pre id='GLPreview'></pre>
-	<input type='file' id='fileIn' oninput='readFile()'/>
-	<label id='readFile' class="vividHover" for='fileIn'>Upload GLTF</label>
-	<button id="clearFiles" class="vividHover" onclick="clearFiles()">Clear</button>
-      </div>
-
-    <div class="sampleInstructions">
       <div class="SIHeadingCont">
 	<h4 class="boldHover selected" onclick="displayMe('SIs', this)">Sample Instructions</h4>
 	<h4 class="boldHover" onclick="displayMe('legoPieces', this)">Lego Pieces</h4>
       </div>
+
+    <div class="sampleInstructions">
       <div id="SIs" class="content"></div>
       <div id="legoPieces" class="content"></div>
     </div>
@@ -428,96 +351,16 @@ scene.userData.controls = controls;
 	scene.add( dirLight );
 
 //GROUND
-/*
 	const planeGeometry = new THREE.PlaneGeometry( 3, 3, 1, 1 );
 	const circleGeometry = new THREE.CircleGeometry(0.1,200,0,2*Math.PI);
 	const material =  new THREE.MeshLambertMaterial({color: 0xb0ffa0, transparent: true, opacity: 0.5});
+/*
 	new THREE.MeshDepthMaterial({color: 0xb0ffa0});
 	new THREE.MeshPhongMaterial({color: 0xb0ffa0, shininess: 0 , reflectivity: 0.5, opacity: 0.75} );
 #f8c5a6  //pink
 #f8cea6 //coral
 #f7d7a6 //soft-yellow
 #f8d1a6 // beige
-*/
-/*
-	const a = 0.5;
-	const boxes = [];
-	const facesPlaces = [[0,a,0],[0,0,0],[0,-a,0],[0,0,0],[0,a,0],[0,0,Math.PI/2],[2*a,a,0],[0,0,Math.PI/2],[0,a,0],[Math.PI/2,0,0],[0,a,-2*a],[Math.PI/2,0,0]]
-
-    for (let i = 0; i<6; i++) {
-	const boxPoints = [];
-	boxPoints.push( new THREE.Vector3( a, a, a ) );
-	boxPoints.push( new THREE.Vector3( a, a, -a ) );
-	boxPoints.push( new THREE.Vector3( -a, a, -a) );
-	boxPoints.push( new THREE.Vector3( -a, a, a ) );
-	boxPoints.push( new THREE.Vector3( a, a, a ) );
-
-	const boxShape = new THREE.BufferGeometry().setFromPoints( boxPoints );
-	const boxMat = new THREE.LineBasicMaterial( {
-		color: 0xffffff,
-		linewidth: 5 //in pixels
-	} );
-
-	const Box = new THREE.Line( boxShape, boxMat );
-	Box.position.fromArray(facesPlaces[2*i]);
-	Box.rotation.fromArray(facesPlaces[2*i+1]);
-	boxes.push(Box);
-    }
-	boxes.forEach(Box => {
-	  scene.add(Box);
-	});
-
-//	const circleGeometry = new THREE.CircleGeometry(0.1,200,0,2*Math.PI);
-//	const material =  new THREE.MeshLambertMaterial({color: 0xb0ffa0, transparent: true, opacity: 0.2});
-//	const ground = new THREE.Mesh( circleGeometry, material);
-//	ground.position.y = 0.01;
-
-	const boxFace = new THREE.PlaneGeometry(2*a, 2*a);
-	const materialCoral =  new THREE.MeshBasicMaterial({color: 0xf8cea6, transparent: false, opacity: 1});
-	const materialPink =  new THREE.MeshBasicMaterial({color: 0xf8c5a6, transparent: true, opacity: 0.5});
-	const materialSoftYellow =  new THREE.MeshBasicMaterial({color: 0xf7d7a6,transparent: true, opacity: 1});
-	const material1 =  new THREE.MeshBasicMaterial({color: 0xF7ECD8, transparent: true, opacity: 0.5});
-	const materialBeige =  new THREE.MeshBasicMaterial({color: 0xf8d1a6, transparent: true, opacity: 1});
-	const groundShadowMaterial =  new THREE.ShadowMaterial({transparent: true});
-
-
-
-	const face1 = new THREE.Mesh( boxFace, material1);
-	face1.rotation.x = - Math.PI / 2;
-	face1.rotation.z = - Math.PI / 2;
-//	face1.receiveShadow = true;
-	scene.add( face1 );
-	const groundShadow = new THREE.Mesh( boxFace, groundShadowMaterial);
-	groundShadow.rotation.x = - Math.PI / 2;
-	groundShadow.rotation.z = - Math.PI / 2;
-	groundShadow.position.y = 0.01;
-//	groundShadow.receiveShadow = true;
-//	scene.add( groundShadow );
-
-	const face2 = new THREE.Mesh( boxFace, materialPink);
-	face2.rotation.x =  Math.PI / 2;
-	face2.rotation.z = - Math.PI / 2;
-	face2.position.y = 2*a;
-	scene.add( face2 );
-
-	const face3 = new THREE.Mesh( boxFace, materialCoral);
-	face3.rotation.y = - Math.PI / 2;
-	face3.position.set(1*a, 1*a, 0);
-	scene.add( face3 );
-
-	const face4 = new THREE.Mesh( boxFace, materialCoral);
-	face4.rotation.y = Math.PI / 2;
-	face4.position.set(-1*a, 1*a, 0);
-	scene.add( face4 );
-
-	const face5 = new THREE.Mesh( boxFace, materialBeige);
-	face5.rotation.y = Math.PI;
-	face5.position.set(0, 1*a, 1*a);
-	scene.add( face5 );
-
-	const face6 = new THREE.Mesh( boxFace, materialBeige);
-	face6.position.set(0, 1*a, -1*a);
-	scene.add( face6 );
 */
 
 	scenes.push( scene );
@@ -624,7 +467,7 @@ function clearThree(obj){
   }
 }
 
-//module.exports = {init, diseng};
+
 window.init = init;
 window.diseng = diseng;
    </script>
