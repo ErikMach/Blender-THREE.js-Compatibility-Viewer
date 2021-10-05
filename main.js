@@ -6,7 +6,7 @@ function createWindow () {
     width: 1200,
     height: 720,
     webPreferences: {
-      devTools: true,
+      devTools: false,
       nodeIntegration: false,
       contextIsolation: false
     }
