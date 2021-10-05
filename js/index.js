@@ -1,4 +1,4 @@
-let files = [];
+let file;
 
 function splash() {
   setTimeout(() => {
@@ -10,52 +10,51 @@ function splash() {
 }
 
 function readFile() {
+  if (file) {
+//    while (document.getElementsByClassName('content')[0].lastChild) {
+//      document.getElementsByClassName('content')[0].removeChild(document.getElementsByClassName('content')[0].lastChild);
+//    }
+    diseng();
+  }
+    file = Array.from(document.getElementById('fileIn').files)[0];
     let reader = new FileReader();
     reader.addEventListener('load', function(e) {
-      init(JSON.parse(e.target.result));
+      init(e.target.result);
     });
-  if (files.length == 0) {
-    files = removeNGLTF(Array.from(document.getElementById('fileIn').files));
+    reader.readAsText(file);
+    document.getElementById('filename').innerHTML = file.name;
+
     document.getElementById('readFile').style.border = '0px solid #f06c6c';
     document.getElementById('readFile').style.margin = '0';
     document.getElementById('clearFiles').style.visibility = 'visible';
-    document.getElementById('fileName').style.visibility = 'visible';
     document.getElementById('readFile').style.visibility = 'visible';
     document.getElementById('clearFiles').style.opacity = 0.5;
     document.getElementById('readFile').style.opacity = 0.5;
-    document.getElementById('fileName').style.opacity = 0.5;
-  } else {
-    let filesTemp = files.concat(Array.from(document.getElementById('fileIn').files));
-    clearFiles(1);
-    files = filesTemp;
-  }
-  loadFile(files);
 }
 
+function clearFiles(n) {
+  diseng();
+//CLEAR INPUT (delete.then(recreate))
+  document.getElementsByClassName("LHS")[0].removeChild(document.getElementById('fileIn'));
+  let newIn = document.createElement('input');
+  newIn.id = 'fileIn';
+  newIn.type = 'file';
+  newIn.setAttribute('oninput', 'readFile()');
+  document.getElementsByClassName("LHS")[0].appendChild(newIn);
+//CLEAR PREVIEWS
+ //   document.getElementsByClassName('content')[0].removeChild(document.getElementsByClassName('content')[0].lastChild);
 
-function loadFile(files) {
-  files.forEach((file, index) => {
-    let reader = new FileReader();
-    reader.addEventListener('load', function(e) {
-      init(JSON.parse(e.target.result));
-    });
-    reader.readAsText(file);
-    let p = document.createElement('p');
-    var ext = file.name.substr(-5, 5);
-    if (file.name.substr(-5, 5) !== '.gltf') {
-      p.innerHTML = `<b>'${file.name}' is not a GLTF file</b>\r\n Please Clear the selection and re-upload`;
-      p.style.color = '#f06c6c';
-    } else {
-      p.innerHTML = `${file.name.slice(0,-4)}${sillyName}`;
-      p.id = 'Step' + index;
-      p.className =  'boldHover';
-      p.setAttribute('onmouseover', `boldFile(${index})`);
-      p.setAttribute('onmouseout', `unBoldFile(${index})`);
-      fileNames.push(file.name);
-    }
-    document.getElementById('GLPreview').appendChild(p);
-  });
-  if (fileNames.length == files.length) {
-    checkMissing();
-  };
+  file = undefined;
+
+  document.getElementById('filename').innerHTML = '';
+//RESET BUTTON STYLES (if needed)
+  if (!n) {
+    document.getElementById('clearFiles').className = '';
+    document.getElementById('readFile').style.opacity = 1;
+    document.getElementById('clearFiles').style.opacity = 0;
+    setTimeout(() => {
+      document.getElementById('clearFiles').style.visibility = 'hidden';
+      document.getElementById('clearFiles').className = 'vividHover';
+    }, 200);
+  }
 }

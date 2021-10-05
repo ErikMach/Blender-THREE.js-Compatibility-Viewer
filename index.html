@@ -49,8 +49,16 @@ body {
   transition: opacity 0.5s;
 }
 .splash > img {
+  width: 250px;
+  height:auto;
+}
+#blenderImg {
+  height: 180px;
   width: auto;
-  height: 200px;
+}
+#arrowImg {
+  height: 180px;
+  width: auto;
 }
 .dispWork {
   position: relative;
@@ -63,9 +71,8 @@ body {
 }
 .sampleInstructions {
   position: relative;
-  width: 72%;
+  width: 100%;
   height: 100%;
-  overflow-y: scroll;
   align-self: flex-end;
 }
 h1 {
@@ -73,6 +80,9 @@ h1 {
 }
 .LHS {
   position: relative;
+}
+.LHS > p {
+  display: inline-block;
 }
 #fileIn {
   display: none !important;
@@ -86,23 +96,19 @@ h1 {
   transition: opacity 0.2s;
   z-index: 4;
 }
-#readFile{
-  top: 0;
-}
 #clearFiles {
   visibility: hidden;
   opacity: 0;
+  bottom: 0;
+  background-color: #f06c6c;
 }
 #readFile {
+  top: 0;
   opacity: 1;
   box-shadow: 2px 2px 2px #aeaeae;
 }
 #readFile:active {
   box-shadow: 0 0 0 black;
-}
-#clearFiles {
-  bottom: 0;
-  background-color: #f06c6c;
 }
 label, button {
   position: relative;
@@ -134,15 +140,11 @@ label:hover, button:hover {
   border-radius: 10px;
   padding: 15px;
 }
-.selected {
-  background-color:white;
-}
 .content {
   position: absolute;
   height: calc(90% - 4px);
   width: calc(100% - 4px);
   border-radius: 10px;
-  overflow-y: scroll;
   border: 2px solid rgb(247,214,101);
 }
 #c {
@@ -159,70 +161,43 @@ label:hover, button:hover {
   height: 80%;
   margin: 5% 10%;
 }
-.stepNum {
-  position: relative;
-  font-size: 20px;
-  font-family: Nunito;
-  font-weight: bold;
-  padding: 0;
-  margin: 0;
-  left: 0;
-  top: 0;
-  color: #038ece;
-}
-#legoPieces, #stats {
-  visibility: hidden;
-  background-color: #f0f0f3;
-  overflow-x: scroll;
-}
-#notification {
-  position: absolute;
-  top: calc(100% - 100px);
-  left: calc(100% - 100px);
-  width: 200px;
-  height: 200px;
-  padding: 20px;
-  border-radius: 5px;
-  background-color: white;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-}
-.hidden {
-  display: none;
-}
   </style>
 
   <body onload="splash();">
 
   <canvas id="c"></canvas>
 
-  <div class="splash"><img src="./Blender-Logo.png"/><img src="./THREEjs-Logo.png"/></div>
-
-  <div id="notification" class="hidden">
-    <p id="message"></p>
-    <button id="close-button" onClick="closeNotification()">
-      Close
-    </button>
-    <button id="restart-button" onClick="restartApp()" class="hidden">
-      Restart
-    </button>
-  </div>
+  <div class="splash"><img id="blenderImg" src="./Blender-Logo.png"/><img id="arrowImg" src="./arrows.png"/><img src="./GLTF-Logo.png"/><img id="arrowImg"src="./arrows.png"/><img src="./THREEjs-Logo.png"/></div>
 
   <div class="LHS">
+    <p>Tone Exposure:&#160;</p><p id="tonExpNum">1</p><br>
+    <input id="toneExp" type="range" min="0" max="20" oninput="document.getElementById('tonExpNum').innerHTML=this.value/10;if (file) {toneExpos(this.value/10)};">
+    <br>
+  <p>Choose a toneMap:</p>
+  <select name="toneMap" id="toneMaps" oninput="if (file) {toggleToneMap(this.value)}">
+    <option value="Linear">Linear</option>
+    <option value="None">None</option>
+    <option value="Reinhard">Reinhard</option>
+    <option value="Cineon">Cineon</option>
+    <option value="ACESFilmic">ACES Filmic</option>
+  </select>
+  <br>
+
     <input type='file' id='fileIn' oninput='readFile()'/>
     <label id='readFile' class="vividHover" for='fileIn'>Upload GLTF</label>
     <button id="clearFiles" class="vividHover" onclick="clearFiles()">Clear</button>
-    
+    <p id="filename"></p> 
   </div>
 
   <div class="dispWork">
       <div class="SIHeadingCont">
-	<h4 class="boldHover selected" onclick="displayMe('SIs', this)">Sample Instructions</h4>
-	<h4 class="boldHover" onclick="displayMe('legoPieces', this)">Lego Pieces</h4>
+	<h4>GLTF Preview</h4>
       </div>
 
-    <div class="sampleInstructions">
-      <div id="SIs" class="content"></div>
-      <div id="legoPieces" class="content"></div>
+    <div class="sampleInstructions" style="position:relative;">
+      <div id="SIs" class="content">
+<p style="position:absolute;top:calc(100% - 2em);margin: 0 1em;">Grid lines are 0.1cm apart | Ctrl+Drag to pan</p>
+</div>
     </div>
   </div>
 
@@ -237,38 +212,42 @@ let renderer;
 const canvas = document.getElementById('c');
 const content = document.getElementsByClassName('content')[0];
 const loader = new THREE.GLTFLoader();
-const scenes = [];
+const scene = new THREE.Scene();
+const toneMappingOpts = {
+	None: THREE.NoToneMapping,
+	Linear: THREE.LinearToneMapping,
+	Reinhard: THREE.ReinhardToneMapping,
+	Cineon: THREE.CineonToneMapping,
+	ACESFilmic: THREE.ACESFilmicToneMapping,
+	Custom: THREE.CustomToneMapping
+};
 
-function init(file) {
-//LOAD EACH File
-    files.forEach((file, i) => {
+function init(fileI) {
+//LOAD THE GLTF
+	loader.parse(fileI, '', function(glb) {
+	  glb.scene.traverse( function (child) {
+	    if (child.isMesh) {
+	      child.needsUpdate;
+	    }
+	  });
+	  scene.add(glb.scene);
+	});
+}
 
-	const scene = new THREE.Scene();
+function init1() {
+
 	scene.background = new THREE.Color(0xF7ECD8);
 //SCENE CONTAINER
 	const element = document.createElement( 'div' );
 	element.className = 'list-item';
 //APPEND SCENE CONTAINER TO MAIN CONTAINER
-scene.userData.element = element;
+	scene.userData.element = element;
 	content.appendChild( element );
 
-/* PUT THIS IN `ELEMENT`
-
-	    <div class="loadingScreen">
-	      <div class="logosCont">
-	        <img src="./img/icon.ico" class="greyedLogo"/>
-	        <div class="vividLogoCont" id="loadCont">
-		  <img src="./img/icon.ico" class="vividLogo"/>
-	        </div>
-	      </div>
-	      <div class='loadPerc'>0%</div>
-	    </div>
-
-*/
 
 //CAMERA
 	const camera = new THREE.PerspectiveCamera( 50, element.offsetWidth/element.offsetHeight,0.001,5000 );
-	camera.position.set(0.2, 0.32, 0.36);
+	camera.position.set(0.05, 0.08, 0.09);
 	camera.lookAt(0, 0, 0);
 
 scene.userData.camera = camera;
@@ -279,26 +258,12 @@ scene.userData.camera = camera;
 	controls.maxDistance = 1.2;
 	controls.enablePan = true;
 	controls.enableZoom = true;
-	controls.zoomSpeed = 0.4;
+	controls.zoomSpeed = 0.6;
 
 scene.userData.controls = controls;
 
-//LOAD THE GLTF
-	file.forEach(piece => {
-	    loader.load(piece, function(glb) {
-	      glb.scene.children[0].castShadow = true;
-	      glb.scene.children[0].receiveShadow = false;
-	      scene.add(glb);
-	    });
-	});
 
 //LIGHTS
-	//scene.add( new THREE.HemisphereLight( 0xaaaaaa, 0x444444 ) );
-
-	const light = new THREE.DirectionalLight( 0xffffff, 0.5 );
-	light.position.set( 1, 1, 1 );
-//	light.castShadow = true;
-	//scene.add( light );
 
 	scene.add( new THREE.AmbientLight( 0xffffff, 0.3 ) );
 
@@ -306,75 +271,57 @@ scene.userData.controls = controls;
 	spotLight.angle = Math.PI / 5;
 	spotLight.penumbra = 0.2;
 	spotLight.position.set( 2, 3, 3 );
-//	spotLight.castShadow = true;
-//	spotLight.shadow.camera.near = 0.05;
-//	spotLight.shadow.camera.far = 4;
-//	spotLight.shadow.mapSize.width = 1024;
-//	spotLight.shadow.mapSize.height = 1024;
 	scene.add( spotLight );
 
 	const spotLight1 = new THREE.SpotLight( 0xffffff, 0.2 );
 	spotLight1.angle = Math.PI / 5;
 	spotLight1.penumbra = 0.2;
 	spotLight1.position.set( -2, 3, -3 );
-//	spotLight1.castShadow = true;
-//	spotLight1.shadow.camera.near = 0.05;
-//	spotLight1.shadow.camera.far = 4;
-//	spotLight1.shadow.mapSize.width = 1024;
-//	spotLight1.shadow.mapSize.height = 1024;
 	scene.add( spotLight1 );
 
 	const spotLight2 = new THREE.SpotLight( 0xffffff, 0.5 );
 	spotLight2.angle = Math.PI / 5;
 	spotLight2.penumbra = 0.2;
 	spotLight2.position.set( 5, 0.02, -0.02 );
-//	spotLight2.castShadow = true;
-//	spotLight2.shadow.camera.near = 0.05;
-//	spotLight2.shadow.camera.far = 4;
-//	spotLight2.shadow.mapSize.width = 1024;
-//	spotLight2.shadow.mapSize.height = 1024;
 	scene.add( spotLight2 );
 
 	const dirLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
 	dirLight.position.set( 0, 2, 0 );
-//	dirLight.castShadow = true;
-//	dirLight.shadow.camera.near = 0.05;
-//	dirLight.shadow.camera.far = 4;
-
-//	dirLight.shadow.camera.right = 1;
-//	dirLight.shadow.camera.left = - 1;
-//	dirLight.shadow.camera.top = 1;
-//	dirLight.shadow.camera.bottom = - 1;
-
-//	dirLight.shadow.mapSize.width = 1024;
-//	dirLight.shadow.mapSize.height = 1024;
 	scene.add( dirLight );
 
 //GROUND
-	const planeGeometry = new THREE.PlaneGeometry( 3, 3, 1, 1 );
+	const planeGeometry = new THREE.PlaneGeometry( 0.1, 0.1, 1, 1 );
 	const circleGeometry = new THREE.CircleGeometry(0.1,200,0,2*Math.PI);
-	const material =  new THREE.MeshLambertMaterial({color: 0xb0ffa0, transparent: true, opacity: 0.5});
-/*
-	new THREE.MeshDepthMaterial({color: 0xb0ffa0});
-	new THREE.MeshPhongMaterial({color: 0xb0ffa0, shininess: 0 , reflectivity: 0.5, opacity: 0.75} );
-#f8c5a6  //pink
-#f8cea6 //coral
-#f7d7a6 //soft-yellow
-#f8d1a6 // beige
-*/
+	const material =  new THREE.MeshLambertMaterial({color: 0xa0a0ae, transparent: true, opacity: 0.5});
+	const ground = new THREE.Mesh(planeGeometry, material);
+	ground.rotation.x = - Math.PI/2;
 
-	scenes.push( scene );
+	//scene.add(ground);
 
-    });
+const gridHelper = new THREE.GridHelper( 0.2, 20 );
+scene.add( gridHelper );
+
+const axesHelper = new THREE.AxesHelper( 0.1 );
+scene.add( axesHelper );
+
+
 
 //RENDERER FOR ALL SCENES
     renderer = new THREE.WebGLRenderer( { canvas: canvas, antialias: true, alpha: true } );
     renderer.setClearColor( 0xf0f0f3, 0 );
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.shadowMap.enabled = false;
+
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.gammaFactor = 2.2;
+    renderer.toneMapping = toneMappingOpts[document.getElementById("toneMaps").value] || THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = document.getElementById("toneExp").value/10 || 1;
+
 //ACTION
     animate();
 }
+
+init1();
 
 function updateSize() {
     const width = canvas.clientWidth;
@@ -394,14 +341,13 @@ function render() {
 
     canvas.style.transform = `translateY(${window.scrollY}px)`;
 
-    renderer.setClearColor( 0xf0f0f3, 0 );
+    renderer.setClearColor( 0xffffff, 0 );
     renderer.setScissorTest( false );
     renderer.clear();
 
     renderer.setClearColor( 0xe0e0e0 );
     renderer.setScissorTest( true );
 
-    scenes.forEach( function ( scene ) {
 	// so something moves
 	//scene.children[ 0 ].rotation.y = Date.now() * 0.001;
 
@@ -434,39 +380,21 @@ function render() {
 	scene.userData.controls.update();
 
 	renderer.render( scene, camera );
-    });
 }
 
 function diseng() {
-  scenes.forEach(scene => {
-    clearThree(scene);
-    scene = null;
-  });
-  scenes.length = 0;
-  cancelAnimationFrame(animate);
+  scene.children.length = scene.children.length-1;
 }
 
-function clearThree(obj){
-  if (obj.children) {
-    while(obj.children.length > 0){ 
-      clearThree(obj.children[0]);
-      obj.remove(obj.children[0]);
-    }
-  }
-  if(obj.geometry) obj.geometry.dispose();
 
-  if(obj.material){ 
-    //in case of map, bumpMap, normalMap, envMap ...
-    Object.keys(obj.material).forEach(prop => {
-      if(!obj.material[prop])
-        return;
-      if(obj.material[prop] !== null && typeof obj.material[prop].dispose === 'function')                                  
-        obj.material[prop].dispose();                                                      
-    })
-    obj.material.dispose();
-  }
+function toggleToneMap(toneMap) {
+    renderer.toneMapping = toneMappingOpts[toneMap];
+    render();
 }
 
+function toneExpos(a) {
+    renderer.toneMappingExposure = a;
+}
 
 window.init = init;
 window.diseng = diseng;
